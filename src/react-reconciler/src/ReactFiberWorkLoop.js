@@ -16,6 +16,7 @@ import {
   HostRoot,
   HostText,
 } from "./ReactWorkTags";
+import { finishQueueingConcurrentUpdates } from "./ReactFiberConcurrentUpdates";
 
 let workInProgress = null;
 export function scheduleUpdateOnFiber(root) {
@@ -116,7 +117,7 @@ function getFlags(flags) {
 
 function prepareFreshStack(root) {
   workInProgress = createWorkInProgress(root.current, null);
-  console.log("workInprogress", workInProgress);
+  finishQueueingConcurrentUpdates();
 }
 
 function renderRootSync(root) {

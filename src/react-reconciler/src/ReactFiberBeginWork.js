@@ -51,6 +51,22 @@ function mountIndeterminateComponent(_current, workInProgress, Component) {
   return workInProgress.child;
 }
 
+function updateFunctionComponent(
+  current,
+  workInProgress,
+  Component,
+  nextProps
+) {
+  const nextChildren = renderWithHooks(
+    current,
+    workInProgress,
+    Component,
+    nextProps
+  );
+  reconcileChildren(current, workInProgress, nextChildren);
+  return workInProgress.child;
+}
+
 export function beginWork(current, workInProgress) {
   logger("beginWork", workInProgress);
   switch (workInProgress.tag) {
@@ -60,6 +76,16 @@ export function beginWork(current, workInProgress) {
         workInProgress,
         workInProgress.type
       );
+    case FunctionComponent: {
+      const Component = workInProgress.type;
+      const resolveProps = workInProgress.pendingProps;
+      return updateFunctionComponent(
+        current,
+        workInProgress,
+        Component,
+        resolveProps
+      );
+    }
     case HostRoot:
       return updateHostRoot(current, workInProgress);
     case HostComponent:

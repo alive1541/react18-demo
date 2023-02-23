@@ -1,8 +1,10 @@
 import { registerTwoPhaseEvent } from "./EventRegistry";
+export const topLevelEventsToReactNames = new Map();
 
 const simpleEventPluginEvents = ["click"];
 
 function registerSimpleEvent(domEventName, reactName) {
+  topLevelEventsToReactNames.set(domEventName, reactName);
   registerTwoPhaseEvent(reactName, [domEventName]);
 }
 

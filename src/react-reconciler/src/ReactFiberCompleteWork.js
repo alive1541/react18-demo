@@ -4,9 +4,16 @@ import {
   createInstance,
   finalizeInitialChildren,
   createTextInstance,
+  prepareUpdate,
 } from "react-dom-bindings/src/client/ReactDOMHostConfig";
-import { NoFlags } from "./ReactFiberFlags";
-import { HostComponent, HostText, HostRoot } from "./ReactWorkTags";
+
+import { NoFlags, Update } from "./ReactFiberFlags";
+import {
+  HostComponent,
+  HostText,
+  HostRoot,
+  FunctionComponent,
+} from "./ReactWorkTags";
 
 function bubbleProperties(completeWork) {
   let subtreeFlags = NoFlags;
@@ -41,6 +48,19 @@ function appendAllChildren(parent, workInProgress) {
   }
 }
 
+function markUpdate(workInProgress) {
+  workInProgress.flags |= Update;
+}
+
+function updateHostComponent(current, workInProgress, type, newProps) {
+  const oldProps = current.memoizedProps;
+  const instance = workInProgress.stateNode;
+  const updatePayload = prepareUpdate(instance, type, oldProps, newProps);
+  workInProgress.updateQueue = updatePayload;
+  if (updatePayload) {
+    markUpdate(workInProgress);
+  }
+}
 export function completeWork(current, workInProgress) {
   indent.number -= 2;
   logger("completeWork", workInProgress);
@@ -48,19 +68,29 @@ export function completeWork(current, workInProgress) {
   switch (workInProgress.tag) {
     case HostComponent: {
       const { type } = workInProgress;
-      const instance = createInstance(type, newProps, workInProgress);
-      appendAllChildren(instance, workInProgress);
-      workInProgress.stateNode = instance;
-      finalizeInitialChildren(instance, type, newProps);
+      if (current !== null && workInProgress.stateNode != null) {
+        updateHostComponent(current, workInProgress, type, newProps);
+        console.log("updatePayload", workInProgress.updateQueue);
+      } else {
+        const instance = createInstance(type, newProps, workInProgress);
+        appendAllChildren(instance, workInProgress);
+        workInProgress.stateNode = instance;
+        finalizeInitialChildren(instance, type, newProps);
+      }
       bubbleProperties(workInProgress);
       break;
     }
+    case FunctionComponent:
+      bubbleProperties(workInProgress);
+      break;
     case HostRoot:
       bubbleProperties(workInProgress);
+      break;
     case HostText:
       const newText = newProps;
       workInProgress.stateNode = createTextInstance(newText);
       bubbleProperties(workInProgress);
+      break;
     default:
       break;
   }

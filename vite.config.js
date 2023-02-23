@@ -17,7 +17,6 @@ export default defineConfig({
       "react-reconciler": path.posix.resolve("src/react-reconciler"),
       scheduler: path.posix.resolve("src/scheduler"),
       shared: path.posix.resolve("src/shared"),
-      "@": path.posix.resolve("src"),
     },
   },
   plugins: [react()],
