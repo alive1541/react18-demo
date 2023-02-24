@@ -6,6 +6,7 @@ import {
   ChildDeletion,
   MutationMask,
   NoFlags,
+  Passive,
   Placement,
   Update,
 } from "./ReactFiberFlags";
@@ -19,6 +20,8 @@ import {
 import { finishQueueingConcurrentUpdates } from "./ReactFiberConcurrentUpdates";
 
 let workInProgress = null;
+let rootDoesHavePassiveEffects = false;
+let rootWithPendingPassiveEffects = null;
 export function scheduleUpdateOnFiber(root) {
   ensureRootIsScheduled(root);
 }
@@ -37,14 +40,35 @@ function performConcurrentWorkOnRoot(root) {
   commitRoot(root);
 }
 
+export function flushPassiveEffects() {
+  if (rootWithPendingPassiveEffects !== null) {
+    const root = rootWithPendingPassiveEffects;
+    commitPassiveUnmountEffects(root.current);
+    commitPassiveMountEffects(root, root.current);
+  }
+}
+
 function commitRoot(root) {
   const { finishedWork } = root;
+  if (
+    (finishedWork.subtreeFlags & Passive) !== NoFlags ||
+    (finishedWork.flags & Passive) !== NoFlags
+  ) {
+    if (!rootDoesHavePassiveEffects) {
+      rootDoesHavePassiveEffects = true;
+      scheduleCallback(flushPassiveEffects);
+    }
+  }
   const subtreeHasEffects =
     (finishedWork.subtreeFlags & MutationMask) !== NoFlags;
   const rootHasEffect = (finishedWork.flags & MutationMask) !== NoFlags;
   if (subtreeHasEffects || rootHasEffect) {
-    console.log("commitRoot");
     commitMutationEffectsOnFiber(finishedWork, root);
+    root.current = finishedWork;
+    if (rootDoesHavePassiveEffects) {
+      rootDoesHavePassiveEffects = false;
+      rootWithPendingPassiveEffects = root;
+    }
   }
   root.current = finishedWork;
 }
