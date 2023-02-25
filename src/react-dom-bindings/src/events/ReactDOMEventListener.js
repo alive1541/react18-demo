@@ -1,6 +1,11 @@
+import {
+  ContinuousEventPriority,
+  DiscreteEventPriority,
+} from "react-reconciler/src/ReactEventPriorities";
 import { getClosestInstanceFromNode } from "../client/ReactDOMComponentTree";
 import { dispatchEventForPluginEventSystem } from "./DOMPluginEventSystem";
 import getEventTarget from "./getEventTarget";
+import { DefaultEventPriority } from "react-reconciler/src/ReactEventPriorities";
 
 export function createEventListenerWrapperWithPriority(
   targetContainer,
@@ -40,4 +45,15 @@ function dispatchEvent(
     targetInst,
     targetContainer
   );
+}
+
+export function getEventPriority(domEventName) {
+  switch (domEventName) {
+    case "click":
+      return DiscreteEventPriority;
+    case "drag":
+      return ContinuousEventPriority;
+    default:
+      return DefaultEventPriority;
+  }
 }
