@@ -1,4 +1,4 @@
-import { scheduleCallback } from "scheduler/src/forks/Scheduler";
+import { scheduleCallback } from "./Scheduler";
 import { createWorkInProgress } from "./ReactFiber";
 import { beginWork } from "./ReactFiberBeginWork";
 import { completeWork } from "./ReactFiberCompleteWork";

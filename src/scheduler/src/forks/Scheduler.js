@@ -1,7 +1,10 @@
 import { frameYieldMs } from "scheduler/SchedulerFeatureFlags";
 import { peek, pop, push } from "scheduler/SchedulerMinHeap";
 import {
+  IdlePriority,
   ImmediatePriority,
+  LowPriority,
+  NormalPriority,
   UserBlockingPriority,
 } from "scheduler/SchedulerPriorities";
 
