@@ -43,6 +43,7 @@ export function createWorkInProgress(current, pendingProps) {
     workInProgress = createFiber(current.tag, pendingProps, current.key);
     workInProgress.type = current.type;
     workInProgress.stateNode = current.stateNode;
+    workInProgress.alternate = current;
     current.alternate = workInProgress;
   } else {
     workInProgress.pendingProps = pendingProps;

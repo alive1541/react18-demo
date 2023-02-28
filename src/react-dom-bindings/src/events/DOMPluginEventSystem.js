@@ -104,6 +104,7 @@ function extractEvents(
   targetContainer
 ) {
   SimpleEventPlugin.extractEvents(
+    dispatchQueue,
     domEventName,
     targetInst,
     nativeEvent,
@@ -133,6 +134,7 @@ export function accumulateSinglePhaseListeners(
         }
       }
     }
+    instance = instance.return;
   }
   return listeners;
 }

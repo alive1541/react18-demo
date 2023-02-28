@@ -10,7 +10,6 @@ function ReactDOMRoot(internalRoot) {
 ReactDOMRoot.prototype.render = function render(children) {
   const root = this._internalRoot;
   root.containerInfo.innerHtml = "";
-  console.log("----root children----", children);
   updateContainer(children, root);
 };
 

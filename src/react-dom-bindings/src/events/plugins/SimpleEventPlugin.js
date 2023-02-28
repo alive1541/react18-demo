@@ -14,7 +14,7 @@ function extractEvents(
   nativeEventTarget,
   eventSystemFlags
 ) {
-  const reactName = topLevelEventsToReactNames(domEventName);
+  const reactName = topLevelEventsToReactNames.get(domEventName);
   let SyntheticEventCtor;
   switch (domEventName) {
     case "click":
@@ -28,7 +28,7 @@ function extractEvents(
     targetInst,
     reactName,
     nativeEvent.type,
-    inCapturePhase
+    isCapturePhase
   );
   if (listeners.length > 0) {
     const event = new SyntheticEventCtor(

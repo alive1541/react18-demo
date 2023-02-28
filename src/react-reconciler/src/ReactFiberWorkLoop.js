@@ -57,6 +57,7 @@ function ensureRootIsScheduled(root) {
   const newCallbackPriority = getHighestPriorityLane(nextLanes);
   if (newCallbackPriority === SyncLane) {
     // TODO
+    debugger;
   } else {
     let schedulerPriorityLevel;
     switch (lanesToEventPriority(nextLanes)) {
@@ -94,6 +95,9 @@ function performConcurrentWorkOnRoot(root, didTimeout) {
   } else {
     renderRootSync(root, lanes);
   }
+  const finishedWork = root.current.alternate;
+  root.finishedWork = finishedWork;
+  commitRoot(root);
 }
 
 function renderRootConcurrent(root, lanes) {

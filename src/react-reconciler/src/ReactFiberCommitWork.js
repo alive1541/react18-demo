@@ -275,6 +275,7 @@ function getHostSibling(fiber) {
 
 function commitPlacement(finishedWork) {
   const parentFiber = getHostParentFiber(finishedWork);
+  if (parentFiber === null) return;
   switch (parentFiber.tag) {
     case HostComponent: {
       const parent = parentFiber.stateNode;

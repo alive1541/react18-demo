@@ -22,7 +22,7 @@ function createSyntheticEvent(Interface) {
     nativeEventTarget
   ) {
     this._reactName = reactName;
-    this.type = type;
+    this.type = reactEventType;
     this._targetInst = targetInst;
     this.nativeEvent = nativeEvent;
     this.target = nativeEventTarget;

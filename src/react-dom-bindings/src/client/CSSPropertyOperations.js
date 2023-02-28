@@ -3,7 +3,7 @@ export function setValueForStyles(node, styles) {
   for (let styleName in styles) {
     if (styles.hasOwnProperty(styleName)) {
       const styleValue = styles[styleName];
-      styles[styleName] = styleValue;
+      style[styleName] = styleValue;
     }
   }
 }
