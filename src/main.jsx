@@ -3,9 +3,9 @@ import * as React from "./react";
 
 
 function FunctionComponent() {
-    const [number, setNumber] = React.useState(0);
-    return <button style={{width: '100px', height: '50px',backgroundColor: 'red'}} onClick={() => {
-      setNumber(number + 1)
+    const [number, setNumber] = React.useState(100);
+    return <button style={{width: number + 'px', height: '50px',backgroundColor: 'red'}} onClick={() => {
+      setNumber(number + 10)
     }}>{number}</button>
 }
 const element = <FunctionComponent />;
