@@ -1,6 +1,5 @@
 import * as Scheduler from "/src/scheduler";
 
-console.log(11111, Scheduler);
 export const scheduleCallback = Scheduler.unstable_scheduleCallback;
 export const NormalPriority = Scheduler.unstable_NormalPriority;
 export const ImmediatePriority = Scheduler.unstable_ImmediatePriority;

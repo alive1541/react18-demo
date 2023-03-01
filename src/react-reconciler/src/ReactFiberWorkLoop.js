@@ -16,7 +16,11 @@ import {
   Placement,
   Update,
 } from "./ReactFiberFlags";
-import { commitMutationEffectsOnFiber } from "./ReactFiberCommitWork";
+import {
+  commitMutationEffectsOnFiber,
+  commitPassiveMountEffects,
+  commitPassiveUnmountEffects,
+} from "./ReactFiberCommitWork";
 import {
   FunctionComponent,
   HostComponent,
@@ -145,7 +149,7 @@ function commitRootImpl(root) {
   ) {
     if (!rootDoesHavePassiveEffects) {
       rootDoesHavePassiveEffects = true;
-      scheduleCallback(flushPassiveEffects);
+      Scheduler_scheduleCallback(NormalSchedulerPriority, flushPassiveEffects);
     }
   }
   const subtreeHasEffects =
