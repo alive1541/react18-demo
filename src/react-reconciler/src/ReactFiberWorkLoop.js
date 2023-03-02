@@ -4,6 +4,8 @@ import {
   UserBlockingPriority as UserBlockingSchedulerPriority,
   NormalPriority as NormalSchedulerPriority,
   IdlePriority as IdleSchedulerPriority,
+  shouldYield,
+  cancelCallback as Scheduler_cancelCallback,
 } from "./Scheduler";
 import { createWorkInProgress } from "./ReactFiber";
 import { beginWork } from "./ReactFiberBeginWork";
@@ -57,17 +59,40 @@ let rootDoesHavePassiveEffects = false;
 let rootWithPendingPassiveEffects = null;
 let workInProgressRootRenderLanes = NoLanes;
 
+const RootInProgress = 0;
+const RootCompleted = 5;
+let workInProgressRoot = null;
+let workInProgressRootExistStatus = RootInProgress;
+
 export function scheduleUpdateOnFiber(root, fiber, lane) {
   markRootUpdate(root, lane);
   ensureRootIsScheduled(root);
 }
 
 function ensureRootIsScheduled(root) {
-  const nextLanes = getNextLanes(root, NoLanes);
+  const existingCallbackNode = root.callbackNode;
+  const nextLanes = getNextLanes(
+    root,
+    root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes
+  );
+  if (nextLanes === NoLanes) {
+    root.callbackNode = null;
+    root.callbackPriority = NoLane;
+    return;
+  }
   const newCallbackPriority = getHighestPriorityLane(nextLanes);
+  const existingCallbackPriority = root.callbackPriority;
+  if (existingCallbackPriority === newCallbackPriority) {
+    return;
+  }
+  if (existingCallbackNode !== null) {
+    Scheduler_cancelCallback(existingCallbackNode);
+  }
+  let newCallbackNode;
   if (newCallbackPriority === SyncLane) {
     scheduleSyncCallback(performSyncWorkOnRoot.bind(null, root));
     queueMicrotask(flushSyncCallbacks);
+    newCallbackNode = null;
   } else {
     let schedulerPriorityLevel;
     switch (lanesToEventPriority(nextLanes)) {
@@ -87,11 +112,13 @@ function ensureRootIsScheduled(root) {
         schedulerPriorityLevel = NormalSchedulerPriority;
         break;
     }
-    Scheduler_scheduleCallback(
+    newCallbackNode = Scheduler_scheduleCallback(
       schedulerPriorityLevel,
       performConcurrentWorkOnRoot.bind(null, root)
     );
   }
+  root.callbackPriority = newCallbackPriority;
+  root.callbackNode = newCallbackNode;
 }
 
 function performSyncWorkOnRoot(root) {
@@ -104,23 +131,47 @@ function performSyncWorkOnRoot(root) {
 }
 
 function performConcurrentWorkOnRoot(root, didTimeout) {
+  const originalCallbackNode = root.callbackNode;
   const lanes = getNextLanes(root, NoLanes);
   if (lanes === NoLanes) {
     return null;
   }
   const shouldTimeSlice = !includesBlockingLane(root, lanes) && !didTimeout;
-  if (shouldTimeSlice) {
-    renderRootConcurrent(root, lanes);
-  } else {
-    renderRootSync(root, lanes);
+  const exitStatus = shouldTimeSlice
+    ? renderRootConcurrent(root, lanes)
+    : renderRootSync(root, lanes);
+  if (exitStatus !== RootInProgress) {
+    const finishedWork = root.current.alternate;
+    root.finishedWork = finishedWork;
+    printFiber(finishedWork);
+    commitRoot(root);
   }
-  const finishedWork = root.current.alternate;
-  root.finishedWork = finishedWork;
-  commitRoot(root);
+  if (root.callbackNode === originalCallbackNode) {
+    return performConcurrentWorkOnRoot.bind(null, root);
+  }
+  return null;
 }
 
 function renderRootConcurrent(root, lanes) {
-  console.log("renderRootConcurrent", root, lanes);
+  if (workInProgressRoot !== root || workInProgressRootRenderLanes !== lanes) {
+    prepareFreshStack(root, lanes);
+  }
+  workLoopConcurrent();
+  if (workInProgress !== null) {
+    return RootInProgress;
+  }
+  workInProgressRoot = null;
+  workInProgressRootRenderLanes = NoLanes;
+  return workInProgressRootExistStatus;
+}
+
+function workLoopConcurrent() {
+  // while (workInProgress !== null && !shouldYield()) {
+  //   performUnitOfWork(workInProgress);
+  // }
+  sleep(3);
+  performUnitOfWork(workInProgress);
+  console.log("shouldYield()", shouldYield(), workInProgress?.type);
 }
 
 export function flushPassiveEffects() {
@@ -143,6 +194,10 @@ function commitRoot(root) {
 
 function commitRootImpl(root) {
   const { finishedWork } = root;
+  root.callbackNode = null;
+  root.callbackPriority = NoLane;
+  workInProgressRoot = null;
+  workInProgressRootRenderLanes = NoLanes;
   if (
     (finishedWork.subtreeFlags & Passive) !== NoFlags ||
     (finishedWork.flags & Passive) !== NoFlags
@@ -233,14 +288,18 @@ function getFlags(flags) {
 }
 
 function prepareFreshStack(root, lanes) {
+  workInProgressRoot = root;
   workInProgress = createWorkInProgress(root.current, null);
   workInProgressRootRenderLanes = lanes;
   finishQueueingConcurrentUpdates();
 }
 
 function renderRootSync(root, lanes) {
-  prepareFreshStack(root, lanes);
+  if (workInProgressRoot !== root || workInProgressRootExistStatus !== lanes) {
+    prepareFreshStack(root, lanes);
+  }
   workLoopSync();
+  return workInProgressRootExistStatus;
 }
 
 function workLoopSync() {
@@ -274,6 +333,9 @@ function completeUnitOfWork(unitOfWork) {
     completedWork = returnFiber;
     workInProgress = completedWork;
   } while (completedWork !== null);
+  if (workInProgressRootExistStatus === RootInProgress) {
+    workInProgressRootExistStatus = RootCompleted;
+  }
 }
 
 export function requestUpdateLane() {
@@ -283,4 +345,14 @@ export function requestUpdateLane() {
   }
   const eventLane = getCurrentEventPriority();
   return eventLane;
+}
+
+function sleep(time) {
+  const timeStamp = new Date().getTime();
+  const endTime = timeStamp + time;
+  while (true) {
+    if (new Date().getTime() > endTime) {
+      return;
+    }
+  }
 }

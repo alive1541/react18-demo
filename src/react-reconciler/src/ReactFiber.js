@@ -27,6 +27,7 @@ export function FiberNode(tag, pendingProps, key) {
   this.alternate = null;
 
   this.index = 0;
+  this.ref = null;
 }
 
 function createFiber(tag, pendingProps, key) {
@@ -58,6 +59,7 @@ export function createWorkInProgress(current, pendingProps) {
   workInProgress.updateQueue = current.updateQueue;
   workInProgress.sibling = current.sibling;
   workInProgress.index = current.index;
+  workInProgress.ref = current.ref;
   return workInProgress;
 }
 

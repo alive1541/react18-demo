@@ -1,3 +1,5 @@
+import { allowConcurrentByDefault } from "shared/ReactFeatureFlags";
+
 export const TotalLanes = 31;
 export const NoLanes = 0b0000000000000000000000000000000;
 export const NoLane = 0b0000000000000000000000000000000;
@@ -15,12 +17,15 @@ export function markRootUpdate(root, updateLane) {
   root.pendingLanes |= updateLane;
 }
 
-export function getNextLanes(root) {
+export function getNextLanes(root, wipLanes) {
   const pendingLanes = root.pendingLanes;
   if (pendingLanes === NoLanes) {
     return NoLanes;
   }
   const nextLeans = getHighestPriorityLanes(pendingLanes);
+  if (wipLanes !== NoLanes && wipLanes !== nextLeans) {
+    return wipLanes;
+  }
   return nextLeans;
 }
 
@@ -37,6 +42,9 @@ export function includesNonIdleWork(lanes) {
 }
 
 export function includesBlockingLane(root, lanes) {
+  if (allowConcurrentByDefault) {
+    return false;
+  }
   const SyncDefaultLanes = InputContinuousLane | DefaultLane;
   return (lanes & SyncDefaultLanes) !== NoLanes;
 }

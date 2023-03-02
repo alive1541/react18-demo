@@ -48,9 +48,20 @@ function updateHostComponent(current, workInProgress) {
   return workInProgress.child;
 }
 
-function mountIndeterminateComponent(_current, workInProgress, Component) {
+function mountIndeterminateComponent(
+  _current,
+  workInProgress,
+  Component,
+  renderLanes
+) {
   const props = workInProgress.pendingProps;
-  const value = renderWithHooks(null, workInProgress, Component, props);
+  const value = renderWithHooks(
+    null,
+    workInProgress,
+    Component,
+    props,
+    renderLanes
+  );
   workInProgress.tag = FunctionComponent;
   reconcileChildren(null, workInProgress, value);
   return workInProgress.child;
@@ -60,13 +71,15 @@ function updateFunctionComponent(
   current,
   workInProgress,
   Component,
-  nextProps
+  nextProps,
+  renderLanes
 ) {
   const nextChildren = renderWithHooks(
     current,
     workInProgress,
     Component,
-    nextProps
+    nextProps,
+    renderLanes
   );
   reconcileChildren(current, workInProgress, nextChildren);
   return workInProgress.child;

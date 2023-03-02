@@ -48,6 +48,7 @@ function createChildReconciler(shouldTrackSideEffects) {
         if (child.type === elementType) {
           deleteRemainingChildren(returnFiber, child.sibling);
           const existing = useFiber(child, element.props);
+          existing.ref = element.ref;
           existing.return = returnFiber;
           return existing;
         }
@@ -59,6 +60,7 @@ function createChildReconciler(shouldTrackSideEffects) {
       child = child.sibling;
     }
     const created = createFiberFromElement(element);
+    created.ref = element.ref;
     created.return = returnFiber;
     return created;
   }
@@ -87,6 +89,7 @@ function createChildReconciler(shouldTrackSideEffects) {
       switch (newChild.$$typeof) {
         case REACT_ELEMENT_TYPE: {
           const created = createFiberFromElement(newChild);
+          created.ref = newChild.ref;
           created.return = returnFiber;
           return created;
         }
@@ -120,11 +123,13 @@ function createChildReconciler(shouldTrackSideEffects) {
     if (current !== null) {
       if (current.type === elementType) {
         const existing = useFiber(current, element.props);
+        existing.ref = element.ref;
         existing.return = returnFiber;
         return existing;
       }
     }
     const created = createFiberFromElement(element);
+    created.ref = element.ref;
     created.return = returnFiber;
     return created;
   }

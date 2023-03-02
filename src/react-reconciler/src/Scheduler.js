@@ -6,3 +6,5 @@ export const ImmediatePriority = Scheduler.unstable_ImmediatePriority;
 export const UserBlockingPriority = Scheduler.unstable_UserBlockingPriority;
 export const LowPriority = Scheduler.unstable_LowPriority;
 export const IdlePriority = Scheduler.unstable_IdlePriority;
+export const shouldYield = Scheduler.unstable_shouldYield;
+export const cancelCallback = Scheduler.unstable_scheduleCallback;

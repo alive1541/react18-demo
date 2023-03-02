@@ -10,7 +10,13 @@ import {
   HostRoot,
   HostText,
 } from "./ReactWorkTags";
-import { MutationMask, Passive, Placement, Update } from "./ReactFiberFlags";
+import {
+  MutationMask,
+  Passive,
+  Placement,
+  Ref,
+  Update,
+} from "./ReactFiberFlags";
 import {
   HasEffect as HookHasEffect,
   Passive as HookPassive,
@@ -318,6 +324,9 @@ export function commitMutationEffectsOnFiber(finishedWork) {
     case HostComponent: {
       recursivelyTraverseMutationEffects(root, finishedWork);
       commitReconciliationEffects(finishedWork);
+      if (flags & Ref) {
+        commitAttackRef(finishedWork);
+      }
       if (flags & Update) {
         const instance = finishedWork.stateNode;
         if (instance !== null) {
@@ -347,5 +356,17 @@ export function commitMutationEffectsOnFiber(finishedWork) {
     }
     default:
       break;
+  }
+}
+
+function commitAttackRef(finishedWork) {
+  const ref = finishedWork.ref;
+  if (ref !== null) {
+    const instance = finishedWork.stateNode;
+    if (typeof ref === "function") {
+      ref(instance);
+    } else {
+      ref.current = instance;
+    }
   }
 }

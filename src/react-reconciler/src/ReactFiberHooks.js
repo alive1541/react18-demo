@@ -7,24 +7,42 @@ import {
   HasEffect as HookHasEffect,
   Passive as HookPassive,
 } from "./ReactHookEffectTags";
+import { NoLane, NoLanes } from "./ReactFiberLane";
 
 const { ReactCurrentDispatcher } = ReactSharedInternals;
 
 let currentlyRenderingFiber = null;
 let workInProgressHook = null;
 let currentHook = null;
+let renderLanes = NoLanes;
 
 const HooksDispatcherOnMountInDev = {
   useReducer: mountReducer,
   useState: mountState,
   useEffect: mountEffect,
+  useRef: mountRef,
 };
 
 const HooksDispatcherOnUpdateInDEV = {
   useReducer: updateReducer,
   useState: updateState,
   useEffect: updateEffect,
+  useRef: updateRef,
 };
+
+function mountRef(initialValue) {
+  const hook = mountWorkInProgressHook();
+  const ref = {
+    current: initialValue,
+  };
+  hook.memoizedState = ref;
+  return ref;
+}
+
+function updateRef() {
+  const hook = updateWorkInProgressHook();
+  return hook.memoizedState;
+}
 
 function updateEffect(create, deps) {
   return updateEffectImpl(PassiveEffect, HookPassive, create, deps);
@@ -226,13 +244,19 @@ function dispatchSetState(fiber, queue, action) {
     eagerState: null,
     next: null,
   };
-  const lastRenderedReducer = queue.lastRenderedReducer;
-  const currentState = queue.lastRenderedState;
-  const eagerState = lastRenderedReducer(currentState, action);
-  update.hasEagerState = true;
-  update.eagerState = eagerState;
-  if (is(eagerState, currentState)) {
-    return;
+  const alternate = fiber.alternate;
+  if (
+    fiber.lanes === NoLanes &&
+    (alternate === null || alternate.lanes === NoLanes)
+  ) {
+    const lastRenderedReducer = queue.lastRenderedReducer;
+    const currentState = queue.lastRenderedState;
+    const eagerState = lastRenderedReducer(currentState, action);
+    update.hasEagerState = true;
+    update.eagerState = eagerState;
+    if (is(eagerState, currentState)) {
+      return;
+    }
   }
   const root = enqueueConcurrentHookUpdate(fiber, queue, update, lane);
   scheduleUpdateOnFiber(root, fiber, lane);
@@ -242,7 +266,14 @@ function updateState(initialState) {
   return updateReducer(basicStateReducer, initialState);
 }
 
-export function renderWithHooks(current, workInProgress, Component, props) {
+export function renderWithHooks(
+  current,
+  workInProgress,
+  Component,
+  props,
+  nextRenderLanes
+) {
+  renderLanes = nextRenderLanes;
   currentlyRenderingFiber = workInProgress;
   workInProgress.updateQueue = null;
   workInProgress.memoizedState = null;
@@ -255,5 +286,6 @@ export function renderWithHooks(current, workInProgress, Component, props) {
   currentlyRenderingFiber = null;
   workInProgressHook = null;
   currentHook = null;
+  renderLanes = NoLanes;
   return children;
 }

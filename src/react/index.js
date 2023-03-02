@@ -3,4 +3,5 @@ export {
   useReducer,
   useState,
   useEffect,
+  useRef,
 } from "./src/React";

@@ -19,3 +19,8 @@ export function useEffect(create, deps) {
   const dispatcher = resolveDispatcher();
   return dispatcher.useEffect(create, deps);
 }
+
+export function useRef(initialValue) {
+  const dispatcher = resolveDispatcher();
+  return dispatcher.useRef(initialValue);
+}
