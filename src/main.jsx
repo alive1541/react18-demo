@@ -1,7 +1,6 @@
 import { createRoot } from "react-dom/src/client/ReactDOMRoot";
 import * as React from "./react";
 
-
 function FunctionComponent() {
   const [numbers, setNumbers] = React.useState(new Array(10).fill('A'));
   const divRef = React.useRef();
